@@ -61,30 +61,32 @@ def armar_problema_csp(colores_disponibles, contenidos_parciales):
 
     def restricciones_unicidad(vars, vals):
         frasco_i, frasco_j = vals
-        if frasco_i != frasco_j:
-            return frasco_i != frasco_j
+        return frasco_i != frasco_j
 
-    def restriccion_max_apariciones_color_con_vals(vars, vals):
+    def restriccion_max_apariciones_color(vars, vals):
         apariciones_colores = {}
+        bool = True
         for combinacion in vals:
             for color in combinacion:
                 if color not in apariciones_colores:
                     apariciones_colores[color] = 0
                 apariciones_colores[color] += 1
                 if apariciones_colores[color] > 4:
-                    return False
-        return True
+                    bool = False
+                    break
+        return bool
 
     def restriccion_color_en_fondo(vars, vals):
         bool = True
         for color in colores_disponibles:
+            segmentos_fondo = 0
             for frasco in vals:
-                segmentos_fondo = 0
                 if frasco[0] == color:
                     segmentos_fondo += 1
+                continue
 
-                if segmentos_fondo == 4:
-                    bool = False
+            if segmentos_fondo == 4:
+                bool = False
         return bool
 
     def restriccion_contenidos_parciales(vars, vals):
@@ -104,7 +106,7 @@ def armar_problema_csp(colores_disponibles, contenidos_parciales):
         restricciones.append((frasco, restricciones_distribucion_colores))
         restricciones.append((frasco, restriccion_contenidos_parciales))
 
-    restricciones.append((frascos, restriccion_max_apariciones_color_con_vals))
+    restricciones.append((frascos, restriccion_max_apariciones_color))
     restricciones.append((frascos, restriccion_color_en_fondo))
 
     for i, frasco_i in enumerate(frascos):
@@ -122,13 +124,14 @@ def armar_problema_csp(colores_disponibles, contenidos_parciales):
 def armar_nivel(colores, contenidos_parciales):
     problema = armar_problema_csp(colores, contenidos_parciales)
     inicio = datetime.datetime.now()
-    asignacion = min_conflicts(problema, iterations_limit=100)
+    asignacion = min_conflicts(problema, iterations_limit=40000)
     tiempo = (datetime.datetime.now() - inicio).total_seconds()
 
     conflictos = _find_conflicts(problema, asignacion)
     print("Numero de conflictos en la solucion: {}".format(len(conflictos)))
     print("Tiempo transcurrido: {} segundos".format(tiempo))
     print(asignacion)
+    print(conflictos)
     lista_dominios = []
     for clave, valor in asignacion.items():
         lista_dominios.append(valor)
@@ -137,10 +140,9 @@ def armar_nivel(colores, contenidos_parciales):
 
 if __name__ == "__main__":
     frascos = armar_nivel(
-        colores=["rojo", "verde", "azul", "amarillo"],  # 4 colores, por lo que deberemos armar 4 frascos
-        contenidos_parciales=[
-            ("verde", "azul", "rojo", "rojo"),  # el frasco 1 ya está completo
-            ("verde", "rojo"),  # el frasco 2 ya tiene dos segmentos completos, hay que rellenar el resto
-            # los frascos 3 y 4 no vinieron definidos, por lo que tenemos más libertad en ellos
-        ],
+        colores=[ "rojo", "verde", "azul", "celeste", "lila", "naranja", "amarillo", "verde_oscuro"],  # 4 colores, por lo que deberemos armar 4 frascos
+        contenidos_parciales=[("rojo", "verde_oscuro", "verde_oscuro", "verde_oscuro"), ("celeste", "azul", "azul"),
+                              ("naranja", "verde_oscuro", "verde", "azul"),
+                              ("amarillo", "amarillo"),
+                              ("celeste",),]
     )
